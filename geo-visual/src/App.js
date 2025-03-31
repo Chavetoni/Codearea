@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
-import TexturedGeologicalLayers from './components/geolayers'; 
+import SoilLayersModel from './components/geolayers'; 
 
 function App() {
   return (
     <div className="App">
-      <TexturedGeologicalLayers />
+      <SoilLayersModel />
     </div>
   );
 }
