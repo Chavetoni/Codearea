@@ -1,38 +1,412 @@
-.App {
-  text-align: center;
-}
+/* src/App.css */
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+/* Main Container */
+.app-container {
+  width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* Header */
+.app-header {
+  padding: 16px;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  flex-wrap: wrap;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.header-label {
+  margin-right: 12px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.header-input {
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px 12px;
+  width: 80px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.header-button {
+  margin-left: 20px;
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.header-button-hover {
+  background-color: #2563eb;
+}
+
+.instructions {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: right;
+  margin-bottom: 8px;
+}
+
+.depth-info {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+/* Content */
+.app-content {
+  display: flex;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+}
+
+.canvas-placing-borehole {
+  flex-grow: 1;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Editor Panel */
+.editor-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 350px;
+  max-width: 100%;
+  background-color: white;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 10;
+  border-left: 1px solid #e5e7eb;
+  box-sizing: border-box;
+}
+
+/* Collapsible Section */
+.collapsible-section-header {
+  font-size: 18px;
+  font-weight: bold;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.collapsible-section-content {
+  padding-left: 10px;
+  border-left: 2px solid #e0e0e0;
+  margin-bottom: 15px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out, padding-top 0.3s ease-out, padding-bottom 0.3s ease-out;
+}
+
+.collapsible-section-content-open {
+  max-height: 2000px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  transition: max-height 0.5s ease-in, padding-top 0.3s ease-in, padding-bottom 0.3s ease-in;
+}
+
+.arrow-icon {
+  transition: transform 0.3s ease-out;
+  font-size: 16px;
+  user-select: none;
+}
+
+.arrow-icon-open {
+  transform: rotate(90deg);
+}
+
+/* Form Controls */
+.checkbox-container {
+  margin-bottom: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.checkbox {
+  margin-right: 10px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.editor-section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.editor-sub-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 15px;
+}
+
+.editor-button {
+  padding: 8px 12px;
+  background-color: #e5e7eb;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background-color 0.2s;
+}
+
+.editor-button-active {
+  background-color: #3b82f6;
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
+.editor-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 16px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.editor-textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 16px;
+  height: 100px;
+  resize: vertical;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+/* Layer Selector */
+.layer-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.layer-selector-item {
+  height: 40px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layer-selector-item-active {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Action Buttons */
+.action-button-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.action-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.add-button {
+  background-color: #10b981;
+  color: white;
+}
+
+.add-button-hover {
+  background-color: #059669;
+}
+
+.remove-button {
+  background-color: #ef4444;
+  color: white;
+}
+
+.remove-button-hover {
+  background-color: #dc2626;
+}
+
+.remove-button-disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Legend */
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+.legend-color-box {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  margin-top: 0px;
+  flex-shrink: 0;
+  border: 1px solid #ccc;
+}
+
+.legend-text-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.legend-layer-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.legend-layer-description {
+  font-size: 14px;
+  color: #6b7280;
+  word-break: break-word;
+}
+
+.legend-layer-depth {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* File Upload */
+.file-input-label {
+  display: inline-block;
+  padding: 10px 15px;
+  background-color: #60a5fa;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+.file-input-label-hover {
+  background-color: #3b82f6;
+}
+
+/* Map Controls */
+.map-control-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.map-control-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+  width: 100%;
+}
+
+.map-control-input {
+  width: calc(33.333% - 8px);
+  margin-right: 8px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Toggle Button */
+.toggle-button {
+  background-color: #f0ad4e;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.toggle-button-active {
+  background-color: #ec971f;
+}
+
+.toggle-button-hover {
+  background-color: #eea236;
 }
