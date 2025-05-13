@@ -19,11 +19,42 @@ class SceneManager {
     this.siteMap = null;
     this.boreholeMarkersGroup = null;
     
+    // Resource tracking
+    this.resources = {
+      geometries: new Set(),
+      materials: new Set(),
+      textures: new Set(),
+      objects: new Set()
+    };
+    
     // Constants
     this.GROUND_GRID_SIZE = 100;
     this.GROUND_GRID_DIVISIONS = 50;
     
     this.initialize();
+  }
+  
+  // Track resources for proper disposal
+  trackResource(type, resource) {
+    if (this.resources[type]) {
+      this.resources[type].add(resource);
+    }
+    return resource;
+  }
+  
+  createGeometry(geometryFunc) {
+    const geometry = geometryFunc();
+    return this.trackResource('geometries', geometry);
+  }
+  
+  createMaterial(materialFunc) {
+    const material = materialFunc();
+    return this.trackResource('materials', material);
+  }
+  
+  createTexture(textureFunc) {
+    const texture = textureFunc();
+    return this.trackResource('textures', texture);
   }
   
   initialize() {
@@ -74,6 +105,30 @@ class SceneManager {
     this.controls.target.set(0, 0, 0);
     this.controls.panSpeed = 1.5;
     this.controls.update();
+    
+    // Add error event listeners for WebGL context
+    this.renderer.domElement.addEventListener('webglcontextlost', this.handleContextLost.bind(this));
+    this.renderer.domElement.addEventListener('webglcontextrestored', this.handleContextRestored.bind(this));
+  }
+  
+  handleContextLost(event) {
+    event.preventDefault();
+    console.warn("WebGL context lost. Attempting to recover...");
+    // Stop any ongoing animations or processes
+  }
+  
+  handleContextRestored() {
+    console.log("WebGL context restored. Reinitializing scene...");
+    // Reinitialize necessary objects
+    this.setupLights();
+    // Redraw scene elements that were lost
+    if (this.groundGrid && this.groundGrid.visible) {
+      this.createGroundGrid(true);
+    }
+    // Notify application that context is restored
+    if (typeof this.onContextRestored === 'function') {
+      this.onContextRestored();
+    }
   }
   
   setupLights() {
@@ -120,12 +175,7 @@ class SceneManager {
   createGroundGrid(showGrid) {
     if (this.groundGrid) {
       this.scene.remove(this.groundGrid);
-      this.groundGrid.geometry.dispose();
-      if (Array.isArray(this.groundGrid.material)) {
-        this.groundGrid.material.forEach(m => m.dispose());
-      } else {
-        this.groundGrid.material.dispose();
-      }
+      this.disposeObject(this.groundGrid);
       this.groundGrid = null;
     }
     
@@ -138,6 +188,7 @@ class SceneManager {
       );
       gridHelper.position.y = 0;
       this.groundGrid = gridHelper;
+      this.resources.objects.add(this.groundGrid);
       this.scene.add(gridHelper);
     }
   }
@@ -158,6 +209,7 @@ class SceneManager {
     if (this.soilCube) {
       this.scene.remove(this.soilCube);
       this.disposeObject(this.soilCube);
+      this.resources.objects.delete(this.soilCube);
       this.soilCube = null;
     }
     
@@ -177,6 +229,7 @@ class SceneManager {
       }
     );
     
+    this.resources.objects.add(this.soilCube);
     this.scene.add(this.soilCube);
   }
   
@@ -184,12 +237,14 @@ class SceneManager {
     if (this.boreholeMarkersGroup) {
       this.scene.remove(this.boreholeMarkersGroup);
       this.disposeObject(this.boreholeMarkersGroup);
+      this.resources.objects.delete(this.boreholeMarkersGroup);
       this.boreholeMarkersGroup = null;
     }
     
     if (!boreholes || boreholes.length === 0) return;
     
     this.boreholeMarkersGroup = this.factory.createBoreholeMarkers(boreholes);
+    this.resources.objects.add(this.boreholeMarkersGroup);
     this.scene.add(this.boreholeMarkersGroup);
   }
   
@@ -199,19 +254,28 @@ class SceneManager {
       if (this.siteMap) {
         this.scene.remove(this.siteMap);
         this.disposeObject(this.siteMap);
+        this.resources.objects.delete(this.siteMap);
         this.siteMap = null;
+      }
+      
+      if (!fileContent) {
+        // Null fileContent means we're just clearing the map
+        if (onSuccess) onSuccess(null);
+        return;
       }
       
       this.factory.loadGLTF(
         fileContent,
         (model) => {
           this.siteMap = model;
+          this.resources.objects.add(this.siteMap);
           this.scene.add(this.siteMap);
           if (onSuccess) onSuccess(model);
         },
         onError
       );
     } catch (error) {
+      console.error("Error loading site map:", error);
       if (onError) onError(error);
     }
   }
@@ -292,17 +356,26 @@ class SceneManager {
     
     object.traverse(child => {
       if (child.geometry) {
+        this.resources.geometries.delete(child.geometry);
         child.geometry.dispose();
       }
       
       if (child.material) {
         if (Array.isArray(child.material)) {
           child.material.forEach(material => {
-            if (material.map) material.map.dispose();
+            this.resources.materials.delete(material);
+            if (material.map) {
+              this.resources.textures.delete(material.map);
+              material.map.dispose();
+            }
             if (material.dispose) material.dispose();
           });
         } else {
-          if (child.material.map) child.material.map.dispose();
+          this.resources.materials.delete(child.material);
+          if (child.material.map) {
+            this.resources.textures.delete(child.material.map);
+            child.material.map.dispose();
+          }
           if (child.material.dispose) child.material.dispose();
         }
       }
@@ -310,26 +383,28 @@ class SceneManager {
   }
   
   dispose() {
-    // Dispose all objects
-    if (this.soilCube) {
-      this.scene.remove(this.soilCube);
-      this.disposeObject(this.soilCube);
+    // Remove event listeners
+    if (this.renderer && this.renderer.domElement) {
+      this.renderer.domElement.removeEventListener('webglcontextlost', this.handleContextLost);
+      this.renderer.domElement.removeEventListener('webglcontextrestored', this.handleContextRestored);
     }
     
-    if (this.groundGrid) {
-      this.scene.remove(this.groundGrid);
-      this.disposeObject(this.groundGrid);
-    }
+    // Dispose all tracked objects
+    this.resources.objects.forEach(object => {
+      if (this.scene) this.scene.remove(object);
+      this.disposeObject(object);
+    });
+    this.resources.objects.clear();
     
-    if (this.siteMap) {
-      this.scene.remove(this.siteMap);
-      this.disposeObject(this.siteMap);
-    }
+    // Dispose all tracked resources
+    this.resources.materials.forEach(material => material.dispose());
+    this.resources.geometries.forEach(geometry => geometry.dispose());
+    this.resources.textures.forEach(texture => texture.dispose());
     
-    if (this.boreholeMarkersGroup) {
-      this.scene.remove(this.boreholeMarkersGroup);
-      this.disposeObject(this.boreholeMarkersGroup);
-    }
+    // Clear tracking sets
+    this.resources.materials.clear();
+    this.resources.geometries.clear();
+    this.resources.textures.clear();
     
     // Dispose renderer
     if (this.renderer) {

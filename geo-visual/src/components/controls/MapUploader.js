@@ -1,5 +1,5 @@
 // src/components/controls/MapUploader.js
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useSiteMap } from '../../hooks/useSiteMap';
 
 const MapUploader = () => {
@@ -8,7 +8,7 @@ const MapUploader = () => {
     mapFileName, 
     siteMapProps, 
     handleMapPropChange, 
-    handleFileChange, 
+    handleFileChange: hookHandleFileChange, 
     handleRemoveMap 
   } = useSiteMap();
   
@@ -16,6 +16,74 @@ const MapUploader = () => {
     loadMap: false,
     removeMap: false
   });
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const loadingTimeoutRef = useRef(null);
+
+  // File validation constants
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const VALID_EXTENSIONS = ['.glb', '.gltf'];
+  const LOADING_TIMEOUT = 30000; // 30 seconds
+
+  // Clean up loading timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleFileChange = useCallback((event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setError(null);
+    
+    // Validate file extension
+    const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    if (!VALID_EXTENSIONS.includes(extension)) {
+      setError(`Invalid file type. Please upload a GLTF (.glb or .gltf) file.`);
+      if (fileInputRef.current) fileInputRef.current.value = null;
+      return;
+    }
+    
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB.`);
+      if (fileInputRef.current) fileInputRef.current.value = null;
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    // Set loading timeout
+    loadingTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false);
+      setError('File loading timed out. Try with a smaller file.');
+      if (fileInputRef.current) fileInputRef.current.value = null;
+    }, LOADING_TIMEOUT);
+    
+    // Call the original handler
+    hookHandleFileChange(event, {
+      onSuccess: () => {
+        clearTimeout(loadingTimeoutRef.current);
+        setIsLoading(false);
+      },
+      onError: (errorMsg) => {
+        clearTimeout(loadingTimeoutRef.current);
+        setIsLoading(false);
+        setError(errorMsg);
+        if (fileInputRef.current) fileInputRef.current.value = null;
+      }
+    });
+  }, [hookHandleFileChange]);
+
+  const handleRemoveMapWithReset = useCallback(() => {
+    setError(null);
+    handleRemoveMap();
+  }, [handleRemoveMap]);
 
   return (
     <div>
@@ -27,24 +95,42 @@ const MapUploader = () => {
         style={{ display: 'none' }}
         onChange={handleFileChange}
         key={mapFileName || `file-input-${Date.now()}`}
+        disabled={isLoading}
       />
       
       <label
         htmlFor="file-upload-input"
-        className={`file-input-label ${isHoveringButton.loadMap ? 'file-input-label-hover' : ''}`}
+        className={`file-input-label ${isHoveringButton.loadMap && !isLoading ? 'file-input-label-hover' : ''}`}
         onMouseEnter={() => setIsHoveringButton(prev => ({ ...prev, loadMap: true }))}
         onMouseLeave={() => setIsHoveringButton(prev => ({ ...prev, loadMap: false }))}
-        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+        onClick={() => !isLoading && fileInputRef.current && fileInputRef.current.click()}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') fileInputRef.current && fileInputRef.current.click();
+          if ((e.key === 'Enter' || e.key === ' ') && !isLoading) 
+            fileInputRef.current && fileInputRef.current.click();
+        }}
+        style={{ 
+          opacity: isLoading ? 0.7 : 1,
+          cursor: isLoading ? 'not-allowed' : 'pointer'
         }}
       >
-        Load Site Map (.glb/.gltf)
+        {isLoading ? 'Loading Site Map...' : 'Load Site Map (.glb/.gltf)'}
       </label>
       
-      {mapFileName && (
+      {error && (
+        <p style={{ 
+          fontSize: '12px', 
+          color: '#d32f2f', 
+          marginBottom: '10px', 
+          wordBreak: 'break-all',
+          fontWeight: 'bold'
+        }}>
+          Error: {error}
+        </p>
+      )}
+      
+      {mapFileName && !error && (
         <p style={{ fontSize: '12px', color: '#555', marginBottom: '10px', wordBreak: 'break-all' }}>
           Loaded: {mapFileName}
         </p>
@@ -114,11 +200,12 @@ const MapUploader = () => {
           </label>
           
           <button
-            onClick={handleRemoveMap}
+            onClick={handleRemoveMapWithReset}
             className={`action-button remove-button ${isHoveringButton.removeMap ? 'remove-button-hover' : ''}`}
             style={{ width: '100%', marginTop: '10px' }}
             onMouseEnter={() => setIsHoveringButton(prev => ({ ...prev, removeMap: true }))}
             onMouseLeave={() => setIsHoveringButton(prev => ({ ...prev, removeMap: false }))}
+            disabled={isLoading}
           >
             Remove Site Map
           </button>
