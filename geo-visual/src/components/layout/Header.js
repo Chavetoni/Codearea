@@ -32,38 +32,23 @@ const Header = ({ totalProfileDepth }) => {
   return (
     <div className="app-header">
       <div className="header-content">
-        <div className="controls">
-          <label className="header-label" htmlFor="layers-input-main">
-            Soil Layers:
-          </label>
-          <input
-            id="layers-input-main"
-            type="number"
-            min="0"
-            max="20"
-            value={layers.length}
-            onChange={handleLayerChange}
-            className="header-input"
-          />
-          <button
-            onClick={() => setShowLayerPanel(!showLayerPanel)}
-            className={`header-button ${isHoveringButton ? 'header-button-hover' : ''}`}
-            onMouseEnter={() => setIsHoveringButton(true)}
-            onMouseLeave={() => setIsHoveringButton(false)}
-          >
-            {showLayerPanel ? "Hide Editor" : "Show Editor"}
-          </button>
-        </div>
-        <div className="instructions">
-          L-Click+Drag: Rotate | R-Click+Drag: Pan | Scroll: Zoom
-        </div>
+        <h2 className="header-title">Map Visualizer</h2>
+        {/* Editor toggle button moved to the right */}
+        <button
+          onClick={() => setShowLayerPanel(!showLayerPanel)}
+          className={`header-button ${isHoveringButton ? 'header-button-hover' : ''}`}
+          onMouseEnter={() => setIsHoveringButton(true)}
+          onMouseLeave={() => setIsHoveringButton(false)}
+        >
+          {showLayerPanel ? "Hide Editor" : "Show Editor"}
+        </button>
       </div>
       {layers.length > 0 && (
         <div className="depth-info">
           <p>Total profile depth: {totalProfileDepth} feet (below ground)</p>
         </div>
       )}
-    </div>
+  </div>
   );
 };
 

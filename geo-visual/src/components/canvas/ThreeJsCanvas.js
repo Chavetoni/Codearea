@@ -145,28 +145,42 @@ const ThreeJsCanvas = () => {
   
   const localError = canvasError || threeJsError;
   
-  return (
-    <div
-      ref={canvasRef}
-      className={isPlacingBorehole ? "canvas-placing-borehole" : "canvas"}
-    >
-      {localError && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          color: 'white',
-          padding: '15px',
-          borderRadius: '8px',
-          maxWidth: '80%',
-          textAlign: 'center',
-          zIndex: 1000
-        }}>
-          {localError}
+    return (
+    <div className="canvas-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div
+        ref={canvasRef}
+        className={isPlacingBorehole ? "canvas-placing-borehole" : "canvas"}
+      >
+        {localError && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '8px',
+            maxWidth: '80%',
+            textAlign: 'center',
+            zIndex: 1000
+          }}>
+            {localError}
+          </div>
+        )}
+      </div>
+      
+      <div className="navigation-box">
+        <div className="navigation-title">Navigation</div>
+        <div className="navigation-grid">
+          <div>L-Click+Drag:</div>
+          <div>Rotate</div>
+          <div>R-Click+Drag:</div>
+          <div>Pan</div>
+          <div>Scroll:</div>
+          <div>Zoom</div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
